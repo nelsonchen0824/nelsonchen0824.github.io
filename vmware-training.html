@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMware vSphere 三層式架構教育訓練</title>
+<style>
+:root {
+  --bg: #0d1117;
+  --bg2: #161b22;
+  --card: #1c2128;
+  --border: #30363d;
+  --blue: #58a6ff;
+  --green: #3fb950;
+  --orange: #d29922;
+  --red: #f85149;
+  --purple: #bc8cff;
+  --text: #e6edf3;
+  --muted: #8b949e;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Segoe UI',Arial,sans-serif; overflow:hidden; }
+
+/* ── Slide container ── */
+.deck { width:100vw; height:100vh; position:relative; }
+.slide {
+  display:none; width:100%; height:100%;
+  padding:3.5rem 5rem; position:absolute; top:0; left:0;
+  flex-direction:column; justify-content:flex-start;
+  animation: fadeIn .35s ease;
+}
+.slide.active { display:flex; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── Nav bar ── */
+.nav-bar {
+  position:fixed; bottom:0; left:0; right:0;
+  background:rgba(13,17,23,.92); border-top:1px solid var(--border);
+  padding:.7rem 2rem; display:flex; align-items:center;
+  justify-content:space-between; z-index:99;
+}
+.nav-bar .slide-info { color:var(--muted); font-size:.85rem; }
+.nav-btns { display:flex; gap:.75rem; }
+.nav-btns button {
+  background:var(--card); border:1px solid var(--border);
+  color:var(--text); padding:.4rem 1.2rem; border-radius:5px;
+  cursor:pointer; font-size:.85rem; transition:all .2s;
+}
+.nav-btns button:hover { border-color:var(--blue); color:var(--blue); }
+.progress {
+  position:fixed; top:0; left:0; height:3px;
+  background:var(--blue); transition:width .3s;
+}
+
+/* ── Typography ── */
+.slide-title {
+  font-size:2.2rem; font-weight:700; color:var(--text);
+  margin-bottom:.3rem; line-height:1.2;
+}
+.slide-title .en { font-size:1rem; font-weight:400; color:var(--muted); margin-left:.75rem; }
+.slide-sub { color:var(--muted); font-size:1rem; margin-bottom:2rem; }
+h3 { font-size:1.15rem; color:var(--blue); margin-bottom:.75rem; }
+p  { color:var(--muted); line-height:1.7; font-size:.95rem; }
+ul { padding-left:1.4rem; }
+ul li { color:var(--muted); font-size:.9rem; line-height:1.8; }
+ul li strong { color:var(--text); }
+
+/* ── Title slide ── */
+.title-slide { justify-content:center; align-items:center; text-align:center; }
+.title-slide .big { font-size:3rem; font-weight:700; line-height:1.2; margin-bottom:.5rem; }
+.title-slide .big span { color:var(--blue); }
+.badge { display:inline-block; background:rgba(88,166,255,.12); border:1px solid rgba(88,166,255,.3); color:var(--blue); padding:.3rem 1rem; border-radius:20px; font-size:.85rem; margin:.25rem; }
+.meta { color:var(--muted); font-size:.9rem; margin-top:1.5rem; }
+
+/* ── Two-col layout ── */
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:2rem; }
+.three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.5rem; }
+
+/* ── Cards ── */
+.card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:8px; padding:1.25rem;
+}
+.card h4 { font-size:.85rem; text-transform:uppercase; letter-spacing:.1em; color:var(--blue); margin-bottom:.6rem; }
+.card.green h4 { color:var(--green); }
+.card.orange h4 { color:var(--orange); }
+.card.red h4 { color:var(--red); }
+.card.purple h4 { color:var(--purple); }
+
+/* ── Tables ── */
+table { width:100%; border-collapse:collapse; font-size:.875rem; }
+th { background:var(--card); color:var(--blue); text-align:left; padding:.65rem .9rem; border-bottom:2px solid var(--border); font-weight:600; }
+td { padding:.6rem .9rem; border-bottom:1px solid var(--border); color:var(--muted); vertical-align:top; }
+tr:hover td { background:rgba(255,255,255,.025); }
+td strong { color:var(--text); }
+.tag { display:inline-block; padding:.15rem .5rem; border-radius:4px; font-size:.75rem; }
+.tag.green { background:rgba(63,185,80,.15); color:var(--green); }
+.tag.blue  { background:rgba(88,166,255,.15); color:var(--blue); }
+.tag.orange{ background:rgba(210,153,34,.15); color:var(--orange); }
+.tag.red   { background:rgba(248,81,73,.15);  color:var(--red); }
+
+/* ── Architecture Diagrams ── */
+.diagram { display:flex; flex-direction:column; align-items:center; gap:.5rem; }
+.d-row { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; justify-content:center; }
+.d-box {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:6px; padding:.6rem 1.1rem; font-size:.8rem;
+  text-align:center; min-width:100px;
+}
+.d-box.blue   { border-color:var(--blue);   color:var(--blue); }
+.d-box.green  { border-color:var(--green);  color:var(--green); }
+.d-box.orange { border-color:var(--orange); color:var(--orange); }
+.d-box.red    { border-color:var(--red);    color:var(--red); }
+.d-box.purple { border-color:var(--purple); color:var(--purple); }
+.d-box small  { display:block; color:var(--muted); font-size:.7rem; }
+.d-label { font-size:.75rem; color:var(--muted); text-align:center; }
+.d-arrow { color:var(--muted); font-size:1.2rem; }
+.d-arrow.h { transform:rotate(-90deg); }
+.layer-box {
+  width:100%; border:1px solid var(--border); border-radius:8px;
+  padding:.75rem 1.25rem; background:var(--card);
+}
+.layer-box .layer-label {
+  font-size:.7rem; text-transform:uppercase; letter-spacing:.12em;
+  color:var(--blue); margin-bottom:.5rem;
+}
+
+/* ── Checklist ── */
+.checklist { list-style:none; padding:0; }
+.checklist li {
+  display:flex; align-items:flex-start; gap:.6rem;
+  color:var(--muted); font-size:.88rem; margin-bottom:.5rem; line-height:1.6;
+}
+.checklist li::before { content:'☐'; color:var(--border); font-size:.9rem; flex-shrink:0; margin-top:.1rem; }
+.checklist li.done::before { content:'✓'; color:var(--green); }
+
+/* Scroll inner content */
+.scroll { overflow-y:auto; max-height:calc(100vh - 9rem); padding-right:.5rem; }
+.scroll::-webkit-scrollbar { width:4px; }
+.scroll::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+.divider { border:none; border-top:1px solid var(--border); margin:1rem 0; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+<!-- ════════════════════ SLIDE 0 : 封面 ════════════════════ -->
+<div class="slide title-slide active">
+  <div class="big">VMware vSphere<br><span>三層式架構教育訓練</span></div>
+  <div style="margin-top:1.2rem">
+    <span class="badge">ESXi</span>
+    <span class="badge">vCenter</span>
+    <span class="badge">HA / vMotion</span>
+    <span class="badge">Backup</span>
+    <span class="badge">Troubleshooting</span>
+  </div>
+  <p class="meta">講師：陳奕臺 Nelson Chen &nbsp;|&nbsp; VMware VCP-DCV &nbsp;|&nbsp; ISO 27001 Lead Auditor</p>
+</div>
+
+<!-- ════════════════════ SLIDE 1 : 三層式架構概覽 ════════════════════ -->
+<div class="slide">
+  <div class="slide-title">三層式架構概覽 <span class="en">VMware 3-Tier Architecture</span></div>
+  <p class="slide-sub">Compute、Network、Storage 三層協同運作，由 vCenter 統一管理</p>
+  <div class="scroll">
+    <div class="diagram">
+      <!-- Management Layer -->
+      <div class="layer-box" style="border-color:var(--purple)">
+        <div class="layer-label" style="color:var(--purple)">Management Layer</div>
+        <div class="d-row">
+          <div class="d-box purple">vCenter Server<small>集中管理平台</small></div>
+          <div class="d-box purple">vSphere Client<small>Web UI / API</small></div>
+        </div>
+      </div>
+      <div class="d-arrow">↓</div>
+      <!-- Compute Layer -->
+      <div class="layer-box" style="border-color:var(--blue)">
+        <div class="layer-label">Compute Layer</div>
+        <div class="d-row">
+          <div class="d-box blue">ESXi Host 1<small>CPU / RAM</small></div>
+          <div class="d-box blue">ESXi Host 2<small>CPU / RAM</small></div>
+          <div class="d-box blue">ESXi Host 3<small>CPU / RAM</small></div>
+        </div>
+      </div>
+      <div class="d-row" style="gap:4rem">
+        <div class="d-arrow">↓</div>
+        <div class="d-arrow">↓</div>
+      </div>
+      <!-- Network & Storage -->
+      <div class="d-row" style="width:100%;align-items:stretch;gap:1.5rem">
+        <div class="layer-box" style="border-color:var(--green);flex:1">
+          <div class="layer-label" style="color:var(--green)">Network Layer</div>
+          <div class="d-row">
+            <div class="d-box green">vSwitch / DVS<small>虛擬交換器</small></div>
+            <div class="d-box green">VLAN / VXLAN<small>網路隔離</small></div>
+          </div>
+        </div>
+        <div class="layer-box" style="border-color:var(--orange);flex:1">
+          <div class="layer-label" style="color:var(--orange)">Storage Layer</div>
+          <div class="d-row">
+            <div class="d-box orange">Datastore<small>VMFS / NFS</small></div>
+            <div class="d-box orange">SAN / NAS<small>共享存儲</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ SLIDE 2 : ESXi 簡介 ════════════════════ -->
+<div class="slide">
+  <div class="slide-title">ESXi 簡介 <span class="en">What is ESXi?</span></div>
+  <p class="slide-sub">VMware 的 Hypervisor，直接安裝於實體硬體，無需底層 OS</p>
+  <div class="scroll two-col">
+    <div>
+      <div class="card" style="margin-bottom:1rem">
+        <h4>Type 1 Hypervisor</h4>
+        <div class="diagram">
+          <div class="d-box blue" style="width:85%">VM1 &nbsp;&nbsp; VM2 &nbsp;&nbsp; VM3<small>Guest OS + Applications</small></div>
+          <div class="d-arrow">↑</div>
+          <div class="d-box purple" style="width:85%">VMkernel (ESXi)<small>資源排程與隔離</small></div>
+          <div class="d-arrow">↑</div>
+          <div class="d-box" style="width:85%">Physical Hardware<small>CPU / RAM / NIC / HDD</small></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:1rem">
+        <h4>核心特性</h4>
+        <ul>
+          <li><strong>Bare-metal 安裝</strong>：直接跑在硬體上，效能最佳</li>
+          <li><strong>VMkernel</strong>：負責 VM 資源排程與硬體溝通</li>
+          <li><strong>vSphere Client</strong>：Web UI 管理介面</li>
+          <li><strong>ESXi Shell / SSH</strong>：進階指令管理</li>
+          <li><strong>High Availability</strong>：搭配 vCenter 支援 HA</li>
+        </ul>
+      </div>
+      <div class="card green">
+        <h4>支援的 VM 格式</h4>
+        <ul>
+          <li>VMDK（VMware 虛擬磁碟）</li>
+          <li>OVF / OVA（跨平台部署格式）</li>
+          <li>ISO（安裝媒體掛載）</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ SLIDE 3 : ESXi 安裝需求 ════════════════════ -->
+<div class="slide">
+  <div class="slide-title">ESXi 安裝需求 <span class="en">Hardware Requirements</span></div>
+  <p class="slide-sub">安裝前確認硬體規格，建議使用 VMware HCL 認證設備</p>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr><th>項目</th><th>最低需求</th><th>建議規格</th><th>說明</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>CPU</strong></td><td>2 Core × 64-bit</td><td>2 Socket × 8C以上</td><td>需支援 Intel VT-x 或 AMD-V 虛擬化技術</td></tr>
+        <tr><td><strong>RAM</strong></td><td>8 GB</td><td>64 GB 以上</td><td>實際依 VM 數量與規格決定，建議保留 20% 給 ESXi</td></tr>
+        <tr><td><strong>Boot Storage</strong></td><td>8 GB (USB/SD)</td><td>SSD 32 GB 以上</td><td>建議使用 M.2 SSD 提升穩定性，避免使用低速 USB</td></tr>
+        <tr><td><strong>Datastore</strong></td><td>依需求</td><td>SSD/SAN 共享存儲</td><td>VM 磁碟存放位置，建議與 Boot Storage 分開</td></tr>
+        <tr><td><strong>網路卡 NIC</strong></td><td>1 × 1GbE</td><td>2 × 10GbE 以上</td><td>建議最少 2 張 NIC 做 NIC Teaming 備援</td></tr>
+        <tr><td><strong>ESXi 版本</strong></td><td>ESXi 7.0</td><td>ESXi 8.0 U2</td><td>選擇對應 vCenter 版本，維持 N-2 版本相容性</td></tr>
+      </tbody>
+    </table>
+    <div class="card" style="margin-top:1.5rem;border-color:var(--orange)">
+      <h4 style="color:var(--orange)">⚠ 注意事項</h4>
+      <ul>
+        <li>安裝前至 <strong>VMware Compatibility Guide (HCL)</strong> 確認硬體相容性</li>
+        <li>BIOS 需開啟 <strong>Virtualization Technology (VT-x/AMD-V)</strong> 及 <strong>Hyper-Threading</strong></li>
+        <li>Secure Boot、TPM 設定依環境決定是否啟用</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ SLIDE 4 : ESXi 資源分配 ════════════════════ -->
+<div class="slide">
+  <div class="slide-title">ESXi 資源分配 <span class="en">Resource Allocation</span></div>
+  <p class="slide-sub">CPU、RAM、Network、Storage 四大資源的分配原則</p>
+  <div class="scroll">
+    <div class="two-col" style="gap:1rem">
+      <div class="card blue">
+        <h4>CPU 分配</h4>
+        <ul>
+          <li><strong>vCPU Overcommit</strong>：建議 1:4 以內（1 pCore → 4 vCPU）</li>
+          <li><strong>CPU Reservation</strong>：關鍵 VM 可鎖定保留資源</li>
+          <li><strong>CPU Limit</strong>：限制 VM 最大 CPU 用量</li>
+          <li><strong>CPU Share</strong>：設定 VM 之間的競爭優先順序</li>
+          <li><strong>NUMA Awareness</strong>：大型 VM 需注意 NUMA 邊界</li>
+        </ul>
+      </div>
+      <div class="card green">
+        <h4>RAM 分配</h4>
+        <ul>
+          <li><strong>Memory Balloon</strong>：低壓時 VMware Tools 回收閒置記憶體</li>
+          <li><strong>Memory Swap</strong>：緊急時使用 Swap（效能最差，應避免）</li>
+          <li><strong>Transparent Page Sharing (TPS)</strong>：相同 OS 頁面去重</li>
+          <li><strong>Reservation</strong>：HA 或關鍵 VM 鎖定保留 RAM</li>
+          <li>建議實體 RAM 使用率 &lt; 75%</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:var(--purple)">
+        <h4 style="color:var(--purple)">Network 分配</h4>
+        <ul>
+          <li><strong>vSwitch</strong>：Standard (VSS) 或 Distributed (DVS)</li>
+          <li><strong>Port Group</strong>：依業務劃分 VLAN</li>
+          <li><strong>VMkernel Port</strong>：管理、vMotion、iSCSI、Fault Tolerance 各自獨立</li>
+          <li><strong>NIC Teaming</strong>：Active/Active 或 Active/Standby 備援</li>
+        </ul>
+      </div>
+      <div class="card orange">
+        <h4>Storage 分配</h4>
+        <ul>
+          <li><strong>VMFS</strong>：Block Storage（FC/iSCSI SAN）</li>
+          <li><strong>NFS</strong>：File Storage（NAS）</li>
+          <li><strong>vSAN</strong>：超融合架構，ESXi 本機磁碟組成叢集存儲</li>
+          <li><strong>Thin vs Thick</strong>：Thin Provision 節省空間但需監控 Over-commit</li>
+          <li>生產環境建議使用共享存儲，支援 HA/vMotion</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ SLIDE 5 : vCenter 安裝設定 ════════════════════ -->
+<div class="slide">
+  <div class="slide-title">vCenter 安裝設定 <span class="en">vCenter Installation</span></div>
+  <p class="slide-sub">建議使用 VCSA（vCenter Server Appliance）— Linux-based，維護簡單</p>
+  <div class="scroll">
+    <table style="margin-bottom:1.5rem">
+      <thead>
+        <tr><th>項目</th><th>VCSA（建議）</th><th>Windows vCenter</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>作業系統</strong></td><td>Photon OS（內建）</td><td>需自備 Windows Server</td></tr>
+        <tr><td><strong>資源需求</strong></td><td>最低 2 vCPU / 12 GB RAM</td><td>需額外 Windows License</td></tr>
+        <tr><td><strong>資料庫</strong></td><td>內建 PostgreSQL</td><td>需外掛 SQL Server</td></tr>
+        <tr><td><strong>維護難度</strong></td><td><span class="tag green">低</span> 內建更新機制</td><td><span class="tag orange">高</span> 需維護 OS + DB</td></tr>
+        <tr><td><strong>VMware 支援</strong></td><td>官方主推，長期支援</td><td>新版本已停止</td></tr>
+      </tbody>
+    </table>
+    <div class="card blue">
+      <h4>VCSA 安裝步驟</h4>
+      <div class="d-row" style="justify-content:flex-start;flex-wrap:wrap;gap:.5rem">
+        <div class="d-box blue" style="min-width:auto;padding:.5rem .9rem;font-size:.78rem">① 下載 ISO</div>
+        <div class="d-arrow h">→</div>
+        <div class="d-box blue" style="min-width:auto;padding:.5rem .9rem;font-size:.78rem">② Stage 1<small>部署 OVA</small></div>
+        <div class="d-arrow h">→</div>
+        <div class="d-box blue" style="min-width:auto;padding:.5rem .9rem;font-size:.78rem">③ Stage 2<small>SSO 設定</small></div>
+        <div class="d-arrow h">→</div>
+        <div class="d-box blue" style="min-width:auto;padding:.5rem .9rem;font-size:.78rem">④ 加入 ESXi</div>
+        <div class="d-arrow h">→</div>
+        <div class="d-box green" style="min-width:auto;padding:.5rem .9rem;font-size:.78rem">⑤ 完成</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ SLIDE 6 : vCenter 管理架構 ════════════════════ -->
+<div class="slide">
+  <div class="slide-title">vCenter 管理架構 <span class="en">vCenter Hierarchy &amp; Features</span></div>
+  <p class="slide-sub">以邏輯層級管理所有 ESXi 主機與虛擬機</p>
+  <div class="scroll two-col">
+    <div>
+      <h3>管理層級架構</h3>
+      <div class="diagram">
+        <div class="d-box purple" style="width:90%">vCenter Server<small>SSO Domain 根節點</small></div>
+        <div class="d-arrow">↓</div>
+        <div class="d-box blue" style="width:80%">Datacenter<small>邏輯資料中心</small></div>
+        <div class="d-arrow">↓</div>
+        <div class="d-box blue" style="width:70%">Cluster<small>HA / DRS 叢集</small></div>
+        <div class="d-arrow">↓</div>
+        <div class="d-row">
+          <div class="d-box green" style="min-width:auto">ESXi Host 1</div>
+          <div class="d-box green" style="min-width:auto">ESXi Host 2</div>
+        </div>
+        <div class="d-arrow">↓</div>
+        <div class="d-row">
+          <div class="d-box" style="font-size:.75rem;min-width:auto">VM</div>
+          <div class="d-box" style="font-size:.75rem;min-width:auto">VM</div>
+          <div class="d-box" style="font-size:.75rem;min-width:auto">VM</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3>主要功能</h3>
+      <table>
+        <thead><tr><th>功能</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td><strong>DRS</strong></td><td>自動負載均衡，依資源使用率遷移 VM</td></tr>
+          <tr><td><strong>HA</strong></td><td>Host 故障時自動在其他 Host 重啟 VM</td></tr>
+          <tr><td><strong>vMotion</strong></td><td>Live migration，不停機遷移 VM</td></tr>
+          <tr><td><strong>Storage vMotion</strong></td><td>線上遷移 VM 磁碟至其他 Datastore</td></tr>
+          <tr><td><strong>Distributed Switch</strong></td><td>跨 Host 的集中式虛擬交換器管理</td></tr>
+          <tr><td><strong>Content Library</strong></td><td>集中管理 ISO、OVF Template</td></tr>
+          <tr><td><strong>vSphere Tags</strong></td><td>資源分類與自動化原則套用</td></tr>
+          <tr><td><strong>Role &amp; Permission</strong></td><td>RBAC 角色與權限管理</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ SLIDE 7 : vSphere HA ════════════════════ -->
+<div class="slide">
+  <div class="slide-title">vSphere HA <span class="en">High Availability</span></div>
+  <p class="slide-sub">ESXi Host 發生故障時，自動在叢集其他 Host 重啟 VM</p>
+  <div class="scroll two-col">
+    <div>
+      <h3>HA 運作流程</h3>
+      <div class="card" style="margin-bottom:1rem">
+        <div class="diagram">
+          <div class="d-row">
+            <div class="d-box blue">Host 1<small>運作中</small></div>
+            <div class="d-box blue">Host 2<small>運作中</small></div>
+            <div class="d-box red">Host 3<small>❌ 故障</small></div>
+          </div>
+          <div class="d-arrow">↓ HA 偵測故障（~30秒）</div>
+          <div class="d-row">
+            <div class="d-box blue">Host 1<small>VM-A 重啟</small></div>
+            <div class="d-box blue">Host 2<small>VM-B 重啟</small></div>
+            <div class="d-box red">Host 3<small>離線</small></div>
+          </div>
+        </div>
+      </div>
+      <div class="card orange">
+        <h4>HA 先決條件</h4>
+        <ul>
+          <li>需建立 vSphere Cluster</li>
+          <li>所有 Host 需使用<strong>共享存儲</strong>（SAN/NAS/vSAN）</li>
+          <li>需有足夠的 <strong>Failover 預留容量</strong></li>
+          <li>VMware Tools 需安裝於 VM</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <h3>HA 設定重點</h3>
+      <table>
+        <thead><tr><th>設定項目</th><th>說明</th><th>建議值</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Host Monitoring</strong></td><td>偵測 Host 心跳</td><td>啟用</td></tr>
+          <tr><td><strong>Admission Control</strong></td><td>保留 Failover 容量</td><td>1 Host 容量</td></tr>
+          <tr><td><strong>VM Restart Priority</strong></td><td>VM 重啟優先順序</td><td>依業務等級設定</td></tr>
+          <tr><td><strong>VM Monitoring</strong></td><td>偵測 Guest OS 心跳</td><td>啟用</td></tr>
+          <tr><td><strong>Heartbeat Datastore</strong></td><td>備援心跳偵測</td><td>設定 2 個以上</td></tr>
+          <tr><td><strong>Isolation Response</strong></td><td>Host 網路隔離時 VM 處置</td><td>Power Off</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ SLIDE 8 : vMotion ════════════════════ -->
+<div class="slide">
+  <div class="slide-title">vMotion <span class="en">Live VM Migration</span></div>
+  <p class="slide-sub">不停機將 VM 從一台 ESXi Host 遷移至另一台</p>
+  <div class="scroll two-col">
+    <div>
+      <h3>vMotion 遷移流程</h3>
+      <div class="diagram">
+        <div class="d-box blue" style="width:85%">Source Host<br><small>VM 記憶體狀態完整複製</small></div>
+        <div class="d-arrow">↓ ① 預複製記憶體（Pre-copy）</div>
+        <div class="d-box" style="width:85%">傳輸差異頁面<small>持續追蹤變更的記憶體頁面</small></div>
+        <div class="d-arrow">↓ ② Stun（極短暫暫停 &lt;1ms）</div>
+        <div class="d-box green" style="width:85%">Destination Host<br><small>VM 在目標 Host 恢復執行</small></div>
+        <div class="d-arrow">↓ ③ 來源 VM 清除</div>
+        <div class="d-box" style="width:85%">Migration 完成 ✓</div>
+      </div>
+    </div>
+    <div>
+      <h3>vMotion 需求</h3>
+      <table style="margin-bottom:1rem">
+        <thead><tr><th>條件</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td><strong>共享存儲</strong></td><td>VM 磁碟須在兩台 Host 皆可存取的 Datastore</td></tr>
+          <tr><td><strong>VMkernel Port</strong></td><td>來源與目標 Host 各需一個 vMotion 專用 VMkernel</td></tr>
+          <tr><td><strong>相容 CPU</strong></td><td>CPU 世代需相容（或啟用 EVC Mode）</td></tr>
+          <tr><td><strong>網路連通</strong></td><td>VM 所用的 Port Group 在目標 Host 也需存在</td></tr>
+          <tr><td><strong>vCenter</strong></td><td>需透過 vCenter 執行，Host 間需在同一 Cluster 或 Cross-vCenter</td></tr>
+        </tbody>
+      </table>
+      <div class="card green">
+        <h4>vMotion 應用場景</h4>
+        <ul>
+          <li>ESXi Host 維護前撤離所有 VM（Maintenance Mode）</li>
+          <li>DRS 自動負載均衡觸發</li>
+          <li>排程遷移（省電、資源調配）</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ SLIDE 9 : HA vs vMotion ════════════════════ -->
+<div class="slide">
+  <div class="slide-title">HA vs vMotion 比較 <span class="en">Comparison</span></div>
+  <p class="slide-sub">兩種技術互補，共同保障服務可用性</p>
+  <div class="scroll">
+    <table style="margin-bottom:2rem">
+      <thead>
+        <tr><th>項目</th><th>vSphere HA</th><th>vMotion</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>目的</strong></td><td>Host 故障自動復原</td><td>不停機主動遷移</td></tr>
+        <tr><td><strong>觸發方式</strong></td><td>自動（偵測故障後）</td><td>手動或 DRS 自動</td></tr>
+        <tr><td><strong>停機時間</strong></td><td><span class="tag orange">有停機</span>（分鐘級重啟）</td><td><span class="tag green">零停機</span>（毫秒級切換）</td></tr>
+        <tr><td><strong>使用情境</strong></td><td>非預期故障（Hardware Failure）</td><td>預期維護、負載均衡</td></tr>
+        <tr><td><strong>共享存儲需求</strong></td><td>必須</td><td>必須</td></tr>
+        <tr><td><strong>vMotion 網路需求</strong></td><td>不需要</td><td>需要（建議 10GbE）</td></tr>
+        <tr><td><strong>CPU 相容性</strong></td><td>不需要</td><td>需要（或 EVC）</td></tr>
+        <tr><td><strong>VM 資料遺失</strong></td><td>重啟前未寫入資料可能遺失</td><td>無資料遺失</td></tr>
+      </tbody>
+    </table>
+    <div class="card blue">
+      <h4>搭配使用建議</h4>
+      <ul>
+        <li>啟用 <strong>HA</strong> 作為底線保護，確保 Host 故障時 VM 自動重啟</li>
+        <li>啟用 <strong>DRS + vMotion</strong> 做動態負載均衡，維護前先 vMotion 撤離 VM</li>
+        <li>關鍵業務可搭配 <strong>Fault Tolerance (FT)</strong> 達到零停機零資料遺失（限制：最多 4 vCPU）</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ SLIDE 10 : 備份機制 ════════════════════ -->
+<div class="slide">
+  <div class="slide-title">備份與備援機制 <span class="en">Backup &amp; Recovery</span></div>
+  <p class="slide-sub">多層次備份策略，確保資料可恢復性與業務連續性</p>
+  <div class="scroll">
+    <div class="two-col" style="margin-bottom:1.5rem">
+      <div>
+        <h3>Snapshot 快照</h3>
+        <div class="card" style="margin-bottom:.75rem">
+          <div class="diagram">
+            <div class="d-box blue" style="width:85%">Base Disk (VMDK)<small>原始磁碟狀態</small></div>
+            <div class="d-arrow">↓ 建立 Snapshot</div>
+            <div class="d-box green" style="width:85%">Delta Disk (-000001.vmdk)<small>記錄快照後的所有變更</small></div>
+            <div class="d-row">
+              <div style="font-size:.78rem;color:var(--green)">還原 → 回到 Base</div>
+              <div style="font-size:.78rem;color:var(--muted)">刪除 → 合併 Delta</div>
+            </div>
+          </div>
+        </div>
+        <div class="card orange">
+          <h4>Snapshot 注意事項</h4>
+          <ul>
+            <li>Snapshot ≠ 備份，不可長期保留（&gt;72hr 影響效能）</li>
+            <li>Delta Disk 持續成長，需監控 Datastore 空間</li>
+            <li>建議於更新/測試前建立，完成後立即刪除</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <h3>RPO / RTO 定義</h3>
+        <div class="card blue" style="margin-bottom:.75rem">
+          <h4>RPO（Recovery Point Objective）</h4>
+          <p>可接受的最大資料遺失時間<br>例：RPO = 1hr → 最多損失 1 小時資料</p>
+        </div>
+        <div class="card green">
+          <h4>RTO（Recovery Time Objective）</h4>
+          <p>可接受的最大恢復時間<br>例：RTO = 4hr → 4 小時內必須恢復服務</p>
+        </div>
+      </div>
+    </div>
+    <h3>備份方案比較</h3>
+    <table>
+      <thead>
+        <tr><th>方案</th><th>類型</th><th>RPO</th><th>RTO</th><th>適用情境</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>VM Snapshot</strong></td><td>狀態保存</td><td>即時</td><td>分鐘級</td><td>短期操作保護</td></tr>
+        <tr><td><strong>Veeam Backup</strong></td><td>Image-based 備份</td><td>分鐘~小時</td><td>&lt;15 分鐘</td><td>企業完整備份首選</td></tr>
+        <tr><td><strong>vSphere Replication</strong></td><td>非同步複製</td><td>分鐘~1hr</td><td>分鐘級</td><td>DR 站台複製</td></tr>
+        <tr><td><strong>Site Recovery Manager</strong></td><td>DR 自動化</td><td>分鐘級</td><td>&lt;1 分鐘</td><td>大規模 DR 切換</td></tr>
+        <tr><td><strong>Storage Snapshot</strong></td><td>儲存陣列快照</td><td>即時</td><td>秒級</td><td>存儲層保護</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════ SLIDE 11 : 備份架構 ════════════════════ -->
+<div class="slide">
+  <div class="slide-title">備份架構設計 <span class="en">Backup Architecture</span></div>
+  <p class="slide-sub">以 Veeam Backup &amp; Replication 為例的常見企業架構</p>
+  <div class="scroll">
+    <div class="diagram" style="margin-bottom:1.5rem">
+      <div class="d-row" style="width:100%;align-items:stretch;gap:1rem">
+        <div class="layer-box" style="border-color:var(--blue);flex:2">
+          <div class="layer-label">Production Site</div>
+          <div class="d-row">
+            <div class="d-box blue">ESXi Host 1<small>VM-A, VM-B</small></div>
+            <div class="d-box blue">ESXi Host 2<small>VM-C, VM-D</small></div>
+            <div class="d-box purple">vCenter<small>管理</small></div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;color:var(--muted);font-size:.9rem">→<br>CBT</div>
+        <div class="layer-box" style="border-color:var(--green);flex:1">
+          <div class="layer-label" style="color:var(--green)">Backup Server</div>
+          <div class="d-box green">Veeam B&amp;R<small>排程 / Job 管理</small></div>
+          <div style="margin-top:.5rem">
+            <div class="d-box green" style="margin-top:.4rem">Backup Repository<small>備份存儲位置</small></div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;color:var(--muted);font-size:.9rem">→<br>Replication</div>
+        <div class="layer-box" style="border-color:var(--orange);flex:1">
+          <div class="layer-label" style="color:var(--orange)">DR Site</div>
+          <div class="d-box orange">ESXi / vCenter<small>DR 環境</small></div>
+          <div class="d-box orange" style="margin-top:.4rem">Offsite Repo<small>異地備份</small></div>
+        </div>
+      </div>
+    </div>
+    <div class="card blue">
+      <h4>CBT（Changed Block Tracking）說明</h4>
+      <ul>
+        <li>ESXi 內建機制，追蹤 VM 磁碟的變更區塊</li>
+        <li>增量備份只傳輸「上次備份後有變更的區塊」，大幅減少備份視窗與網路流量</li>
+        <li>若 CBT 異常（Snapshot 殘留、強制關機），需執行 CBT Reset</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ SLIDE 12 : 點檢清單 ════════════════════ -->
+<div class="slide">
+  <div class="slide-title">基礎點檢清單 <span class="en">Operational Checklist</span></div>
+  <p class="slide-sub">定期執行點檢，確保環境穩定，降低故障風險</p>
+  <div class="scroll three-col">
+    <div class="card blue">
+      <h4>每日 Daily</h4>
+      <ul class="checklist">
+        <li>確認 vCenter 告警（Alarms）無紅色</li>
+        <li>確認所有 ESXi Host 狀態為 Connected</li>
+        <li>確認 VM 運行狀態，無意外關機</li>
+        <li>確認備份 Job 執行結果（成功/失敗）</li>
+        <li>檢查 Datastore 使用率 &lt; 80%</li>
+        <li>確認 HA / DRS 叢集狀態正常</li>
+      </ul>
+    </div>
+    <div class="card green">
+      <h4>每週 Weekly</h4>
+      <ul class="checklist">
+        <li>確認 ESXi Host CPU / RAM 平均使用率趨勢</li>
+        <li>清理過期 Snapshot（&gt;7天）</li>
+        <li>確認 NIC Teaming 備援狀態</li>
+        <li>確認 Storage Path 狀態（Active/Standby）</li>
+        <li>確認 vCenter / ESXi 是否有可用更新</li>
+        <li>確認 VMware Tools 版本狀態</li>
+        <li>確認備份 Repository 空間充足</li>
+      </ul>
+    </div>
+    <div class="card orange">
+      <h4>每月 Monthly</h4>
+      <ul class="checklist">
+        <li>執行備份還原測試（DR Drill）</li>
+        <li>確認 SSL 憑證有效期限</li>
+        <li>確認 vCenter DB 大小與效能</li>
+        <li>審查 Role &amp; Permission 設定</li>
+        <li>確認 ESXi 系統日誌無異常</li>
+        <li>確認 UPS / 電源備援狀態</li>
+        <li>更新容量規劃報告</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ SLIDE 13 : 障礙排除 ════════════════════ -->
+<div class="slide">
+  <div class="slide-title">常見問題與障礙排除 <span class="en">Troubleshooting</span></div>
+  <p class="slide-sub">常見故障現象、原因分析與對應處置</p>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr><th>現象</th><th>可能原因</th><th>排除步驟</th><th>嚴重度</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>ESXi Host 變成 Not Responding</strong></td>
+          <td>Management Network 中斷、主機當機</td>
+          <td>① Ping 管理 IP → ② SSH 登入測試 → ③ 查 vmkernel log → ④ IPMI/iDRAC 確認主機狀態</td>
+          <td><span class="tag red">Critical</span></td>
+        </tr>
+        <tr>
+          <td><strong>VM 無法啟動 (Failed to power on)</strong></td>
+          <td>Datastore 空間不足、資源不足、Snapshot 損壞</td>
+          <td>① 確認 Datastore 空間 → ② 確認 CPU/RAM 容量 → ③ 檢查 vmware.log → ④ 移除孤立 Snapshot</td>
+          <td><span class="tag red">High</span></td>
+        </tr>
+        <tr>
+          <td><strong>vMotion 失敗</strong></td>
+          <td>vMotion 網路不通、CPU 不相容、Snapshot 存在</td>
+          <td>① 確認 vMotion VMkernel 連通 → ② 確認 EVC Mode → ③ 確認 VM 無 Snapshot → ④ 查 vCenter event log</td>
+          <td><span class="tag orange">Medium</span></td>
+        </tr>
+        <tr>
+          <td><strong>Datastore 空間爆滿</strong></td>
+          <td>Snapshot 未清理、VM 磁碟成長、Log 累積</td>
+          <td>① 確認並刪除過期 Snapshot → ② 確認 Thin Disk 實際佔用 → ③ 移動 VM 至其他 Datastore</td>
+          <td><span class="tag orange">High</span></td>
+        </tr>
+        <tr>
+          <td><strong>HA 未觸發 Failover</strong></td>
+          <td>Admission Control 容量不足、Datastore Heartbeat 異常</td>
+          <td>① 確認 Admission Control 設定 → ② 確認 Heartbeat Datastore 連通 → ③ 確認 vCenter 可連線至所有 Host</td>
+          <td><span class="tag red">Critical</span></td>
+        </tr>
+        <tr>
+          <td><strong>vCenter 無法登入</strong></td>
+          <td>SSO 服務異常、憑證過期、資料庫服務停止</td>
+          <td>① SSH 登入 VCSA → ② 執行 service-control --status --all → ③ 重啟 vmware-vpxd → ④ 確認憑證有效期</td>
+          <td><span class="tag red">Critical</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="card blue" style="margin-top:1.25rem">
+      <h4>關鍵 Log 位置</h4>
+      <ul>
+        <li><strong>ESXi vmkernel</strong>：/var/log/vmkernel.log（Host 核心訊息）</li>
+        <li><strong>ESXi hostd</strong>：/var/log/hostd.log（Host Agent 訊息）</li>
+        <li><strong>vCenter vpxd</strong>：/var/log/vmware/vpxd/vpxd.log（vCenter 核心）</li>
+        <li><strong>VM 開機 log</strong>：[Datastore] VM名稱/vmware.log</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ SLIDE 14 : Q&A ════════════════════ -->
+<div class="slide title-slide">
+  <div class="big">Q &amp; A<br><span>問題與討論</span></div>
+  <p style="color:var(--muted);margin-top:1.5rem;font-size:1.05rem">感謝各位的參與，歡迎提問</p>
+  <div style="margin-top:2rem">
+    <span class="badge">Nelson Chen</span>
+    <span class="badge">nelsonchen0824@gmail.com</span>
+    <span class="badge">VMware VCP-DCV</span>
+  </div>
+</div>
+
+</div><!-- end deck -->
+
+<!-- ── Navigation bar ── -->
+<nav class="nav-bar">
+  <span class="slide-info" id="slideInfo">1 / 15</span>
+  <div class="nav-btns">
+    <button id="btnPrev">← Prev</button>
+    <button id="btnNext">Next →</button>
+  </div>
+</nav>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const info   = document.getElementById('slideInfo');
+const prog   = document.getElementById('progress');
+let cur = 0;
+
+function go(n) {
+  slides[cur].classList.remove('active');
+  cur = (n + slides.length) % slides.length;
+  slides[cur].classList.add('active');
+  info.textContent = (cur + 1) + ' / ' + slides.length;
+  prog.style.width = ((cur + 1) / slides.length * 100) + '%';
+}
+
+document.getElementById('btnNext').addEventListener('click', () => go(cur + 1));
+document.getElementById('btnPrev').addEventListener('click', () => go(cur - 1));
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') go(cur + 1);
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                    go(cur - 1);
+});
+
+go(0);
+</script>
+</body>
+</html>
