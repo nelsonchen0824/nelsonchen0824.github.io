@@ -657,6 +657,20 @@ body {
     font-size: 0.8rem;
 }
 
+.footer-visitors {
+    margin-top: .75rem;
+}
+
+.footer-visitors img {
+    height: 20px;
+    opacity: .7;
+    transition: opacity .2s;
+}
+
+.footer-visitors img:hover {
+    opacity: 1;
+}
+
 /* ── Fade-in animation ── */
 .fade-in {
     opacity: 0;
