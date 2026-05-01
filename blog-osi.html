@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSI 七層模型深度解析 | Nelson Chen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0d1117; --bg2:#161b22; --card:#1c2128; --border:#30363d;
+  --accent:#58a6ff; --green:#3fb950; --orange:#d29922; --red:#f85149; --purple:#bc8cff;
+  --text:#e6edf3; --muted:#8b949e;
+  --font:'Inter',-apple-system,sans-serif; --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.8;}
+
+.topbar{
+  position:sticky;top:0;z-index:99;
+  background:rgba(13,17,23,.9);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:.85rem 2rem;display:flex;align-items:center;justify-content:space-between;
+}
+.topbar a{color:var(--accent);text-decoration:none;font-size:.875rem;}
+.topbar .title{color:var(--muted);font-size:.85rem;}
+
+.hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:4rem 2rem 3rem;}
+.hero-inner{max-width:820px;margin:0 auto;}
+.hero-meta{display:flex;gap:.75rem;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;}
+.tag{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;padding:.25rem .7rem;border-radius:20px;background:rgba(88,166,255,.1);color:var(--accent);border:1px solid rgba(88,166,255,.25);}
+.tag.green{background:rgba(63,185,80,.1);color:var(--green);border-color:rgba(63,185,80,.25);}
+.tag.orange{background:rgba(210,153,34,.1);color:var(--orange);border-color:rgba(210,153,34,.25);}
+.date{font-size:.82rem;color:var(--muted);}
+.hero h1{font-size:clamp(1.6rem,4vw,2.4rem);font-weight:700;line-height:1.3;margin-bottom:1rem;}
+.hero .lead{font-size:1rem;color:var(--muted);line-height:1.8;}
+
+.article{max-width:820px;margin:0 auto;padding:3rem 2rem 5rem;}
+
+h2{font-size:1.4rem;font-weight:700;margin:3rem 0 1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border);}
+h3{font-size:1.05rem;font-weight:600;color:var(--accent);margin:2rem 0 .6rem;}
+h4{font-size:.95rem;font-weight:600;color:var(--orange);margin:1.5rem 0 .5rem;}
+p{color:var(--muted);margin-bottom:.9rem;font-size:.95rem;}
+strong{color:var(--text);}
+ul,ol{padding-left:1.5rem;margin-bottom:1rem;}
+li{color:var(--muted);font-size:.92rem;margin-bottom:.35rem;line-height:1.75;}
+li strong{color:var(--text);}
+
+/* Callout */
+.callout{background:var(--card);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:1rem 1.4rem;margin:1.5rem 0;}
+.callout.orange{border-color:var(--orange);}
+.callout.green{border-color:var(--green);}
+.callout.red{border-color:var(--red);}
+.callout p{margin:0;font-size:.9rem;}
+.callout-title{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:.4rem;font-weight:600;}
+.callout.orange .callout-title{color:var(--orange);}
+.callout.green .callout-title{color:var(--green);}
+.callout.red .callout-title{color:var(--red);}
+
+/* Tables */
+table{width:100%;border-collapse:collapse;margin:1.25rem 0;font-size:.85rem;}
+th{background:var(--card);color:var(--accent);text-align:left;padding:.65rem .9rem;border-bottom:2px solid var(--border);white-space:nowrap;}
+td{padding:.6rem .9rem;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top;}
+tr:hover td{background:rgba(255,255,255,.02);}
+td strong{color:var(--text);}
+.center{text-align:center;}
+
+/* Layer badges */
+.l-badge{display:inline-block;padding:.15rem .55rem;border-radius:4px;font-size:.75rem;font-weight:600;font-family:var(--mono);}
+.l7{background:rgba(188,140,255,.15);color:var(--purple);}
+.l6{background:rgba(88,166,255,.15);color:var(--accent);}
+.l5{background:rgba(63,185,80,.15);color:var(--green);}
+.l4{background:rgba(210,153,34,.15);color:var(--orange);}
+.l3{background:rgba(248,81,73,.15);color:var(--red);}
+.l2{background:rgba(88,166,255,.12);color:#79c0ff;}
+.l1{background:rgba(139,148,158,.15);color:var(--muted);}
+
+/* Code */
+pre{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;overflow-x:auto;margin:1.25rem 0;}
+code{font-family:var(--mono);font-size:.83rem;color:var(--green);}
+pre code{color:var(--text);}
+.cmd{color:var(--accent);}
+.comment{color:var(--muted);}
+.output{color:var(--green);}
+
+/* Encapsulation diagram */
+.encap{display:flex;flex-direction:column;gap:.4rem;margin:1.5rem 0;}
+.encap-row{display:flex;align-items:center;gap:.5rem;}
+.encap-label{font-size:.75rem;color:var(--muted);width:80px;text-align:right;flex-shrink:0;font-family:var(--mono);}
+.encap-bar{display:flex;flex:1;border-radius:4px;overflow:hidden;height:36px;}
+.encap-seg{display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:600;font-family:var(--mono);padding:0 .5rem;white-space:nowrap;}
+.seg-app{background:rgba(188,140,255,.25);color:var(--purple);flex:4;}
+.seg-tcp{background:rgba(210,153,34,.25);color:var(--orange);flex:1.2;}
+.seg-ip{background:rgba(248,81,73,.25);color:var(--red);flex:1.2;}
+.seg-eth{background:rgba(88,166,255,.2);color:#79c0ff;flex:1.2;}
+.seg-trl{background:rgba(88,166,255,.1);color:var(--muted);flex:.6;}
+.seg-bit{background:rgba(139,148,158,.15);color:var(--muted);flex:1;font-size:.65rem;}
+.seg-data{background:rgba(63,185,80,.15);color:var(--green);flex:4;}
+
+/* TCP handshake */
+.handshake{display:grid;grid-template-columns:1fr 2fr 1fr;gap:0;margin:1.5rem 0;text-align:center;font-size:.82rem;}
+.hs-host{background:var(--card);border:1px solid var(--border);border-radius:8px 8px 0 0;padding:.5rem;font-weight:600;color:var(--text);}
+.hs-line{border-left:2px dashed var(--border);min-height:30px;}
+.hs-arrow{padding:.35rem .5rem;color:var(--accent);display:flex;align-items:center;justify-content:center;gap:.5rem;font-size:.8rem;}
+.hs-arrow .flag{font-size:.7rem;background:rgba(88,166,255,.15);color:var(--accent);padding:.1rem .4rem;border-radius:4px;font-family:var(--mono);}
+.hs-arrow .flag.green{background:rgba(63,185,80,.15);color:var(--green);}
+
+/* Q&A */
+.qa-item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem;}
+.qa-q{font-weight:600;color:var(--text);margin-bottom:.6rem;font-size:.95rem;}
+.qa-q::before{content:'Q: ';color:var(--accent);}
+.qa-a{color:var(--muted);font-size:.9rem;line-height:1.75;}
+.qa-a::before{content:'A: ';color:var(--green);font-weight:600;}
+
+/* Footer */
+.article-footer{border-top:1px solid var(--border);padding-top:2rem;margin-top:3rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;}
+.author-info .name{font-weight:600;font-size:.9rem;}
+.author-info .role{font-size:.8rem;color:var(--muted);}
+.back-btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:.55rem 1.2rem;border-radius:6px;text-decoration:none;font-size:.85rem;transition:border-color .2s;}
+.back-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+@media(max-width:640px){
+  .hero,.article{padding-left:1.25rem;padding-right:1.25rem;}
+  .encap-label{display:none;}
+  table{font-size:.78rem;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html">← Nelson Chen</a>
+  <span class="title">Blog &nbsp;/&nbsp; OSI 七層模型深度解析</span>
+</div>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-meta">
+      <span class="tag">CCNA</span>
+      <span class="tag green">網路基礎</span>
+      <span class="tag orange">企業維運</span>
+      <span class="date">2025-05</span>
+    </div>
+    <h1>OSI 七層模型深度解析：從理論到企業實務維運</h1>
+    <p class="lead">OSI 模型是所有網路通訊的共同語言。理解它，不只是為了通過 CCNA 考試，更是每位網路工程師排除障礙、設計架構、與廠商溝通的核心基礎。</p>
+  </div>
+</header>
+
+<article class="article">
+
+<!-- ════ 1. 核心概念 ════ -->
+<h2>一、核心概念簡介</h2>
+<p><strong>OSI（Open Systems Interconnection）模型</strong>是由 ISO 於 1984 年制定的網路通訊參考架構，將網路通訊的複雜過程切割為七個功能層次，每一層各司其職，並透過標準介面與相鄰層溝通。</p>
+
+<div class="callout">
+  <div class="callout-title">一句話總結</div>
+  <p>OSI 模型將「兩台電腦如何透過網路交換資料」這件事，拆解成七個可獨立設計、獨立排障的標準層次。</p>
+</div>
+
+<p>雖然現今實際網路普遍採用 TCP/IP 四層模型，OSI 七層模型仍是業界進行<strong>故障排除、協定分析、架構溝通</strong>的通用參考框架，Cisco 在其所有認證課程中均以 OSI 模型作為教學基礎。</p>
+
+
+<!-- ════ 2. 技術規格表 ════ -->
+<h2>二、技術規格表</h2>
+
+<table>
+  <thead>
+    <tr><th>層次</th><th>名稱</th><th>PDU 單位</th><th>主要協定 / 技術</th><th>代表設備</th><th>定址方式</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><span class="l-badge l7">L7</span></td><td><strong>Application 應用層</strong></td><td>Data</td><td>HTTP(80)、HTTPS(443)、FTP(21)、SSH(22)、DNS(53)、DHCP(67/68)、SMTP(25)、SNMP(161)</td><td>防火牆、Proxy、WAF</td><td>—</td></tr>
+    <tr><td><span class="l-badge l6">L6</span></td><td><strong>Presentation 表現層</strong></td><td>Data</td><td>TLS/SSL、JPEG、MPEG、ASCII、Unicode、Base64</td><td>—</td><td>—</td></tr>
+    <tr><td><span class="l-badge l5">L5</span></td><td><strong>Session 會議層</strong></td><td>Data</td><td>NetBIOS、RPC、PPTP、L2TP</td><td>—</td><td>—</td></tr>
+    <tr><td><span class="l-badge l4">L4</span></td><td><strong>Transport 傳輸層</strong></td><td>Segment</td><td>TCP（連線導向）、UDP（無連線）</td><td>Load Balancer、防火牆</td><td>Port Number (0–65535)</td></tr>
+    <tr><td><span class="l-badge l3">L3</span></td><td><strong>Network 網路層</strong></td><td>Packet</td><td>IPv4、IPv6、ICMP、ARP、OSPF、EIGRP、BGP</td><td>Router、L3 Switch</td><td>IP Address</td></tr>
+    <tr><td><span class="l-badge l2">L2</span></td><td><strong>Data Link 資料連結層</strong></td><td>Frame</td><td>Ethernet（802.3）、Wi-Fi（802.11）、802.1Q（VLAN）、STP（802.1D）</td><td>Switch、Bridge、WAP</td><td>MAC Address</td></tr>
+    <tr><td><span class="l-badge l1">L1</span></td><td><strong>Physical 實體層</strong></td><td>Bit</td><td>Ethernet 電纜、光纖、Wi-Fi 無線射頻、USB、DSL</td><td>Hub、Repeater、NIC</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<h3>常用 TCP / UDP 連接埠速查表</h3>
+<table>
+  <thead><tr><th>服務</th><th>Protocol</th><th>Port</th><th>說明</th></tr></thead>
+  <tbody>
+    <tr><td><strong>FTP Data</strong></td><td>TCP</td><td>20</td><td>資料傳輸通道</td></tr>
+    <tr><td><strong>FTP Control</strong></td><td>TCP</td><td>21</td><td>指令控制通道</td></tr>
+    <tr><td><strong>SSH</strong></td><td>TCP</td><td>22</td><td>加密遠端管理（取代 Telnet）</td></tr>
+    <tr><td><strong>Telnet</strong></td><td>TCP</td><td>23</td><td>明文傳輸，<span style="color:var(--red)">不建議使用</span></td></tr>
+    <tr><td><strong>SMTP</strong></td><td>TCP</td><td>25</td><td>郵件發送</td></tr>
+    <tr><td><strong>DNS</strong></td><td>UDP / TCP</td><td>53</td><td>查詢用 UDP，Zone Transfer 用 TCP</td></tr>
+    <tr><td><strong>DHCP Server</strong></td><td>UDP</td><td>67</td><td>伺服器監聽</td></tr>
+    <tr><td><strong>DHCP Client</strong></td><td>UDP</td><td>68</td><td>用戶端發送</td></tr>
+    <tr><td><strong>HTTP</strong></td><td>TCP</td><td>80</td><td>明文 Web</td></tr>
+    <tr><td><strong>HTTPS</strong></td><td>TCP</td><td>443</td><td>加密 Web（TLS）</td></tr>
+    <tr><td><strong>SNMP</strong></td><td>UDP</td><td>161</td><td>網路設備監控</td></tr>
+    <tr><td><strong>Syslog</strong></td><td>UDP</td><td>514</td><td>系統日誌</td></tr>
+  </tbody>
+</table>
+
+
+<!-- ════ 3. 運作機制 ════ -->
+<h2>三、運作機制分析</h2>
+
+<h3>3.1 資料封裝（Encapsulation）與解封裝（De-encapsulation）</h3>
+<p>當應用程式送出資料時，資料從 L7 向下傳遞，每一層在前端加上自己的 <strong>Header</strong>（L2 還會在尾端加上 Trailer），稱為封裝（Encapsulation）。接收端則從 L1 向上逐層剝除 Header，稱為解封裝（De-encapsulation）。</p>
+
+<div class="encap">
+  <div class="encap-row">
+    <span class="encap-label">L7–L5</span>
+    <div class="encap-bar"><div class="encap-seg seg-app">Application Data</div></div>
+  </div>
+  <div class="encap-row">
+    <span class="encap-label">L4 Segment</span>
+    <div class="encap-bar"><div class="encap-seg seg-tcp">TCP Hdr</div><div class="encap-seg seg-data">Data</div></div>
+  </div>
+  <div class="encap-row">
+    <span class="encap-label">L3 Packet</span>
+    <div class="encap-bar"><div class="encap-seg seg-ip">IP Hdr</div><div class="encap-seg seg-tcp">TCP Hdr</div><div class="encap-seg seg-data">Data</div></div>
+  </div>
+  <div class="encap-row">
+    <span class="encap-label">L2 Frame</span>
+    <div class="encap-bar"><div class="encap-seg seg-eth">ETH Hdr</div><div class="encap-seg seg-ip">IP Hdr</div><div class="encap-seg seg-tcp">TCP Hdr</div><div class="encap-seg seg-data">Data</div><div class="encap-seg seg-trl">FCS</div></div>
+  </div>
+  <div class="encap-row">
+    <span class="encap-label">L1 Bits</span>
+    <div class="encap-bar"><div class="encap-seg seg-bit">01001000 01100101 01101100 01101100 01101111 ...</div></div>
+  </div>
+</div>
+
+<h3>3.2 TCP 三向交握（Three-Way Handshake）</h3>
+<p>TCP 在傳輸資料前，需先透過三向交握建立連線，確保雙方準備就緒並同步 Sequence Number。</p>
+
+<table>
+  <thead><tr><th>步驟</th><th>方向</th><th>Flag</th><th>說明</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Step 1</strong></td><td>Client → Server</td><td><span class="l-badge l4">SYN</span></td><td>Client 發出連線請求，送出初始 Sequence Number（ISN）</td></tr>
+    <tr><td><strong>Step 2</strong></td><td>Server → Client</td><td><span class="l-badge l3">SYN-ACK</span></td><td>Server 確認並回應自己的 ISN，ACK = Client ISN + 1</td></tr>
+    <tr><td><strong>Step 3</strong></td><td>Client → Server</td><td><span class="l-badge l5">ACK</span></td><td>Client 確認 Server 的 ISN，連線建立完成</td></tr>
+  </tbody>
+</table>
+
+<h3>3.3 TCP vs UDP 比較</h3>
+<table>
+  <thead><tr><th>項目</th><th>TCP</th><th>UDP</th></tr></thead>
+  <tbody>
+    <tr><td><strong>連線方式</strong></td><td>Connection-Oriented（需三向交握）</td><td>Connectionless（直接傳送）</td></tr>
+    <tr><td><strong>可靠性</strong></td><td>高（ACK 確認、重傳機制）</td><td>低（不保證到達）</td></tr>
+    <tr><td><strong>速度</strong></td><td>較慢（overhead 大）</td><td>較快（overhead 小）</td></tr>
+    <tr><td><strong>流量控制</strong></td><td>有（Sliding Window）</td><td>無</td></tr>
+    <tr><td><strong>適用情境</strong></td><td>HTTP、HTTPS、FTP、SSH、Email</td><td>DNS 查詢、DHCP、VoIP、串流、SNMP</td></tr>
+    <tr><td><strong>Header 大小</strong></td><td>20–60 bytes</td><td>8 bytes</td></tr>
+  </tbody>
+</table>
+
+<h3>3.4 各層設備的轉發邏輯</h3>
+<table>
+  <thead><tr><th>設備</th><th>運作層次</th><th>轉發依據</th><th>廣播域</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Hub</strong></td><td>L1</td><td>所有 Port 廣播</td><td>共用一個廣播域</td></tr>
+    <tr><td><strong>Switch</strong></td><td>L2</td><td>MAC Address Table</td><td>每個 VLAN 一個廣播域</td></tr>
+    <tr><td><strong>Router</strong></td><td>L3</td><td>Routing Table（IP）</td><td>隔離廣播域</td></tr>
+    <tr><td><strong>L3 Switch</strong></td><td>L2 + L3</td><td>MAC + IP（Hardware ASIC）</td><td>VLAN 間路由</td></tr>
+    <tr><td><strong>Firewall</strong></td><td>L3–L7</td><td>ACL、狀態表、應用識別</td><td>依策略隔離</td></tr>
+  </tbody>
+</table>
+
+
+<!-- ════ 4. 實務維運與資安 ════ -->
+<h2>四、實務維運與資安策略</h2>
+
+<h3>4.1 各層資安威脅與防護</h3>
+<table>
+  <thead><tr><th>層次</th><th>常見威脅</th><th>防護措施</th></tr></thead>
+  <tbody>
+    <tr><td><span class="l-badge l7">L7</span></td><td>SQL Injection、XSS、DDoS、釣魚攻擊</td><td>WAF、應用程式防火牆、IPS</td></tr>
+    <tr><td><span class="l-badge l6">L6</span></td><td>SSL Strip、憑證偽造、弱加密演算法</td><td>強制 TLS 1.2+、憑證 Pinning、HSTS</td></tr>
+    <tr><td><span class="l-badge l5">L5</span></td><td>Session Hijacking、Session Fixation</td><td>Session Timeout 設定、加密 Session Token</td></tr>
+    <tr><td><span class="l-badge l4">L4</span></td><td>TCP SYN Flood、Port Scanning、UDP Flood</td><td>SYN Cookie、防火牆 Port 過濾、Rate Limiting</td></tr>
+    <tr><td><span class="l-badge l3">L3</span></td><td>IP Spoofing、ICMP Flood、路由欺騙</td><td>ACL、uRPF、BGP Prefix Filtering</td></tr>
+    <tr><td><span class="l-badge l2">L2</span></td><td>ARP Spoofing、MAC Flooding、VLAN Hopping</td><td>Dynamic ARP Inspection（DAI）、Port Security、802.1X</td></tr>
+    <tr><td><span class="l-badge l1">L1</span></td><td>實體竊聽、線路破壞、未授權接入</td><td>機房門禁、上鎖線架、監控攝影、光纖加密</td></tr>
+  </tbody>
+</table>
+
+<h3>4.2 障礙排除方法論：Bottom-Up vs Top-Down</h3>
+<p>Cisco 官方認可的 OSI 排障方式有三種，選擇哪種取決於問題的初始線索：</p>
+<ul>
+  <li><strong>Bottom-Up（由下往上）</strong>：從 L1 開始確認實體連線，適用於完全無法通訊的情況。優先檢查 Link Light、Cable、Interface status。</li>
+  <li><strong>Top-Down（由上往下）</strong>：從 L7 應用層開始，適用於特定服務無法存取但網路可 Ping 通的情況。</li>
+  <li><strong>Divide-and-Conquer（對半切）</strong>：從 L3 開始，先確認 IP 連通性，再決定往上或往下追查，效率最高，適合有經驗的工程師。</li>
+</ul>
+
+<h3>4.3 企業實務排障指令</h3>
+<pre><code><span class="comment">! ── L1 / L2 實體與連結層確認 ──</span>
+<span class="cmd">show interfaces GigabitEthernet0/0</span>
+<span class="output">GigabitEthernet0/0 is up, line protocol is up   ← 兩個 up 才正常</span>
+
+<span class="cmd">show mac address-table</span>
+<span class="output">確認 Switch 是否學到正確 MAC Address</span>
+
+<span class="comment">! ── L3 網路層確認 ──</span>
+<span class="cmd">show ip interface brief</span>
+<span class="output">確認 IP 已正確設定且 Protocol up</span>
+
+<span class="cmd">ping 192.168.1.1</span>
+<span class="output">!!!!! 代表 5 個封包全部回應成功</span>
+
+<span class="cmd">traceroute 8.8.8.8</span>
+<span class="output">顯示封包逐跳路徑，找出斷點位置</span>
+
+<span class="comment">! ── L4 傳輸層確認 ──</span>
+<span class="cmd">telnet 192.168.1.1 443</span>
+<span class="output">確認目標 Port 是否開放（能連就代表 L4 通）</span>
+
+<span class="comment">! ── 檢視 ARP Table（L2 ↔ L3 交界）──</span>
+<span class="cmd">show arp</span>
+<span class="output">Protocol  Address    Age  Hardware Addr   Interface
+Internet  10.0.0.1    -   aabb.cc00.0100  Gi0/0</span></code></pre>
+
+<h3>4.4 企業維運建議</h3>
+<ul>
+  <li><strong>L1</strong>：機房佈線採用色碼管理（不同顏色線材對應不同用途），並定期使用纜線測試儀（Cable Tester）確認連接品質</li>
+  <li><strong>L2</strong>：啟用 <strong>BPDU Guard</strong> 與 <strong>PortFast</strong> 於接取層 Switch Port，防止 STP 被意外干擾；啟用 <strong>Port Security</strong> 限制每個 Port 最大 MAC 數量</li>
+  <li><strong>L3</strong>：所有路由器與 L3 Switch 啟用 <strong>ACL</strong> 過濾不必要流量；生產環境路由協定應啟用 Authentication（如 OSPF MD5 Authentication）</li>
+  <li><strong>L4</strong>：防火牆採用 Stateful Inspection，只允許 Established 連線回程；關閉非必要 Port，遵循最小開放原則</li>
+  <li><strong>L7</strong>：外對內服務一律使用 HTTPS；管理界面（如 Web UI）禁止對 Internet 開放，限制管理 IP 來源</li>
+</ul>
+
+<h3>4.5 商業影響分析</h3>
+<table>
+  <thead><tr><th>OSI 層次</th><th>維運落實</th><th>企業效益</th></tr></thead>
+  <tbody>
+    <tr><td><span class="l-badge l2">L2</span> VLAN 分割</td><td>依部門、業務隔離廣播域</td><td>降低廣播風暴風險，提升網路效能；隔離財務、HR 等敏感系統，符合資安合規要求</td></tr>
+    <tr><td><span class="l-badge l3">L3</span> ACL 管控</td><td>限制跨 VLAN 存取權限</td><td>實現最小權限原則，降低內部橫向移動（Lateral Movement）風險</td></tr>
+    <tr><td><span class="l-badge l4">L4</span> Firewall</td><td>Stateful 封包過濾</td><td>有效阻擋未授權連線，符合 ISO 27001、PCI-DSS 等法規要求</td></tr>
+    <tr><td><span class="l-badge l6">L6</span> TLS 加密</td><td>所有 Web 服務啟用 HTTPS</td><td>防止資料被攔截竊聽，建立用戶信任，避免資料外洩罰款</td></tr>
+    <tr><td><span class="l-badge l1">L1</span> 備援線路</td><td>核心設備雙電源、雙上行</td><td>消除單點故障（SPOF），提升 SLA 可用性至 99.9%+</td></tr>
+  </tbody>
+</table>
+
+
+<!-- ════ 5. Q&A ════ -->
+<h2>五、常見問題 Q&amp;A</h2>
+
+<div class="qa-item">
+  <div class="qa-q">Switch 和 Router 的根本差異是什麼？為什麼企業需要兩者並存？</div>
+  <p class="qa-a">Switch 運作於 L2，依據 <strong>MAC Address</strong> 在同一個網段內轉發 Frame，速度快（ASIC 硬體處理）但無法跨越廣播域。Router 運作於 L3，依據 <strong>IP Address</strong> 在不同網段之間路由 Packet，並隔離廣播域。企業網路通常以 Switch 建立高速 LAN，再以 Router（或 L3 Switch）連接不同部門 VLAN 及對外 Internet，兩者分工合作。</p>
+</div>
+
+<div class="qa-item">
+  <div class="qa-q">為什麼 DNS 查詢用 UDP，但 Zone Transfer 用 TCP？</div>
+  <p class="qa-a">DNS 查詢的資料量小（通常 &lt;512 bytes），使用 <strong>UDP</strong> 速度更快且 Overhead 低，即使偶爾 Timeout 重查成本也低。但 DNS Zone Transfer 需要傳輸大量完整區域資料，資料量可能超過 UDP 單封包上限，且不允許資料遺失，因此改用 <strong>TCP</strong> 的可靠傳輸機制。這是 CCNA 考試中 TCP vs UDP 選擇題的經典考點。</p>
+</div>
+
+<div class="qa-item">
+  <div class="qa-q">實務排障時，看到「GigabitEthernet is up, line protocol is down」代表什麼問題？</div>
+  <p class="qa-a">「Interface up」代表 L1 實體層正常（有電訊號，線材沒斷），但「line protocol down」代表 <strong>L2 無法建立連線</strong>。常見原因包括：兩端 Encapsulation 不一致（如一端設 HDLC、另一端設 PPP）、Keepalive 封包沒有收到、或 Clock Rate 未在 DCE 端設定。排查方向：先確認兩端 Encapsulation 一致（<code>show interfaces</code>），再確認 DCE 端有設定 <code>clock rate</code>。</p>
+</div>
+
+<div class="callout orange">
+  <div class="callout-title">CCNA 考試重點提醒</div>
+  <p>記憶 OSI 層次的常用口訣（由上往下 L7→L1）：<strong>All People Seem To Need Data Processing</strong>（Application、Presentation、Session、Transport、Network、Data Link、Physical）。考試中「PDU 名稱」與「各層代表協定」是高頻考點，請務必熟記。</p>
+</div>
+
+<div class="article-footer">
+  <div class="author-info">
+    <div class="name">陳奕臺 Nelson Chen</div>
+    <div class="role">Systems Engineer &nbsp;|&nbsp; CCNA &nbsp;|&nbsp; VMware VCP &nbsp;|&nbsp; ISO 27001 Lead Auditor</div>
+  </div>
+  <a href="index.html#blog" class="back-btn">← 回到 Blog</a>
+</div>
+
+</article>
+</body>
+</html>
